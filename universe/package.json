@@ -1,0 +1,26 @@
+{
+  "packagingVersion": "4.0", 
+  "upgradesFrom": [], 
+  "downgradesTo": [], 
+  "minDcosReleaseVersion": "1.10", 
+  "name": "vespa", 
+  "version": "0.1.0", 
+  "maintainer": "andrew.kerrigan@issgovernance.com",
+  "description": "Vespa on DC/OS", 
+  "selected": false,
+  "framework": true,
+  "scm":null,
+  "website":null,
+  "tags": [
+      "vespa"
+  ], 
+  "licenses": [
+      {
+        "name": "MIT",
+        "url": "..."
+      }
+    ],
+  "preInstallNotes": "Default configuration requires ... agent nodes each with: ... CPU | ... MB MEM | ... MB Disk.", 
+  "postInstallNotes": "DC/OS Vespa is being installed!", 
+  "postUninstallNotes": "DC/OS Vespa is being uninstalled."
+}

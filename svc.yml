@@ -1,0 +1,127 @@
+name: {{FRAMEWORK_NAME}}
+scheduler:
+ principal: {{FRAMEWORK_PRINCIPAL}}
+ user: {{FRAMEWORK_USER}}
+pods:
+ config:
+   count: {{CONFIG_NODE_COUNT}}
+   image: {{VESPA_DOCKER_IMAGE}}
+   placement: '{{{CONFIG_NODE_PLACEMENT}}}'
+   {{#ENABLE_VIRTUAL_NETWORK}}
+   networks:
+     {{VIRTUAL_NETWORK_NAME}}:
+       labels: {{VIRTUAL_NETWORK_PLUGIN_LABELS}}
+   {{/ENABLE_VIRTUAL_NETWORK}}
+   uris:
+     - {{BOOTSTRAP_URI}}
+     - {{VESPA_INIT_URI}}
+   tasks:
+     node:
+       cpus: {{CONFIG_NODE_CPUS}}
+       memory: {{CONFIG_NODE_MEM}}
+       ports:
+         config-http:
+           port: {{CONFIG_NODE_PORT}}
+           advertise: true
+           vip:
+             prefix: config
+             port: 19071
+         config-container-http:
+           port: {{CONTAINER_NODE_PORT}}
+           advertise: true
+           vip:
+             prefix: config-container
+             port: 8080
+       volumes:
+         config:
+           path: vespa
+           type: {{CONFIG_NODE_DISK_TYPE}}
+           size: {{CONFIG_NODE_DISK}}
+       goal: RUNNING
+       cmd: ./bootstrap && chmod 755 ./vespa-init.sh && ./vespa-init.sh
+       env:
+         COUNT: {{CONFIG_NODE_COUNT}}
+         CONTAINER_COUNT: {{CONTAINER_NODE_COUNT}}
+         CONTENT_COUNT: {{CONTENT_NODE_COUNT}}
+         VESPA_MODE: config
+         HOME: /mnt/mesos/sandbox
+ content:
+   count: {{CONTENT_NODE_COUNT}}
+   image: {{VESPA_DOCKER_IMAGE}}
+   placement: '{{{CONTENT_NODE_PLACEMENT}}}'
+   {{#ENABLE_VIRTUAL_NETWORK}}
+   networks:
+     {{VIRTUAL_NETWORK_NAME}}:
+       labels: {{VIRTUAL_NETWORK_PLUGIN_LABELS}}
+   {{/ENABLE_VIRTUAL_NETWORK}}
+   uris:
+     - {{BOOTSTRAP_URI}}
+     - {{VESPA_INIT_URI}}
+   tasks:
+     node:
+       cpus: {{CONTENT_NODE_CPUS}}
+       memory: {{CONTENT_NODE_MEM}}
+       volumes:
+         data-repository:
+           path: vespa
+           type: {{CONTENT_NODE_DISK_TYPE}}
+           size: {{CONTENT_NODE_DISK}}
+       goal: RUNNING
+       cmd: ./bootstrap && chmod 755 ./vespa-init.sh && ./vespa-init.sh
+       env:
+         COUNT: {{CONFIG_NODE_COUNT}}
+         CONTAINER_COUNT: {{CONTAINER_NODE_COUNT}}
+         CONTENT_COUNT: {{CONTENT_NODE_COUNT}}
+         VESPA_MODE: content
+         HOME: /mnt/mesos/sandbox
+ container:
+   count: {{CONTAINER_NODE_COUNT}}
+   image: {{VESPA_DOCKER_IMAGE}}
+   placement: '{{{CONTAINER_NODE_PLACEMENT}}}'
+   {{#ENABLE_VIRTUAL_NETWORK}}
+   networks:
+     {{VIRTUAL_NETWORK_NAME}}:
+       labels: {{VIRTUAL_NETWORK_PLUGIN_LABELS}}
+   {{/ENABLE_VIRTUAL_NETWORK}}
+   uris:
+     - {{BOOTSTRAP_URI}}
+     - {{VESPA_INIT_URI}}
+   tasks:
+     node:
+       cpus: {{CONTAINER_NODE_CPUS}}
+       memory: {{CONTAINER_NODE_MEM}}
+       ports:
+         container-http:
+           port: {{CONTAINER_NODE_PORT}}
+           advertise: true
+           vip:
+             prefix: container
+             port: 8080
+       volumes:
+         data-repository:
+           path: vespa
+           type: {{CONTAINER_NODE_DISK_TYPE}}
+           size: {{CONTAINER_NODE_DISK}}
+       goal: RUNNING
+       cmd: ./bootstrap && chmod 755 ./vespa-init.sh && ./vespa-init.sh
+       env:
+         COUNT: {{CONFIG_NODE_COUNT}}
+         CONTAINER_COUNT: {{CONTAINER_NODE_COUNT}}
+         CONTENT_COUNT: {{CONTENT_NODE_COUNT}}
+         VESPA_MODE: container
+         HOME: /mnt/mesos/sandbox
+plans:
+  deploy:
+    strategy: serial
+    phases:
+       config-deploy:
+        strategy: serial
+        pod: config
+       content-deploy:
+        strategy: serial
+        pod: content
+       container-deploy:
+        strategy: serial
+        pod: container
+
+# TODO: make bridge network, and actually mount volumes to var and logs dirs, can't remap them!
